@@ -7,12 +7,12 @@ const int centerCompensate = 0;
 
 const double PI = 3.14159265358979323846;
 const int radius = 10; // 设置旋转半径
-const int clicksPerRound = 1; // 设置点击次数
-const int stepsPerRound = 36; // 设置旋转的步数，现在是两圈
+const int clicksPerPeriod = 1; // 设置点击次数
+const int stepsPerPeriod = 36; // 设置旋转的步数，现在是两圈
 const int nRounds = 1;
-const int timePerRound = 400; // ms
+const int timePerPeriod = 1600; // ms
 
-int rotationStep = 0;
+int totStep = 0;
 
 DWORD WINAPI ClickThread(LPVOID lpParam) {
     int* pos = (int*)lpParam;
@@ -49,15 +49,29 @@ int main() {
         
         if (GetAsyncKeyState(circleKey)) {
             // Increment the rotation step
-            rotationStep++;
+            totStep++;
+            int stepInPeriod = totStep % stepsPerPeriod;
+            double stepFraction = (double)stepInPeriod / stepsPerPeriod;
+
+            double angle = 0;
+            // double angle = -PI/6 + PI/3*stepFraction 
+            //     + (stepFraction < 0.5 ? 0 : PI);
+            if (stepFraction < 0.25)
+                angle = PI;
+            else if (stepFraction < 0.5)
+                angle = 0;
+            else if (stepFraction < 0.75)
+                angle = PI/2;
+            else
+                angle = -PI/2;
 
             // Calculate the new position based on the rotation step
-            int x = centerX + radius * cos(2 * PI * rotationStep / stepsPerRound);
-            int y = centerY + radius * sin(2 * PI * rotationStep / stepsPerRound);
+            int x = centerX + radius * cos(angle);
+            int y = centerY + radius * sin(angle);
 
             // Move the cursor to the new position
             SetCursorPos(x, y);
-            Sleep(timePerRound / stepsPerRound);
+            Sleep(timePerPeriod / stepsPerPeriod);
         }
     }
 
