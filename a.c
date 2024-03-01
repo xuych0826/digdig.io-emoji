@@ -5,6 +5,15 @@ const int brakeKey = 'Z';
 const int circleKey = 'X';
 const int centerCompensate = 0;
 
+const double PI = 3.14159265358979323846;
+const int radius = 10; // 设置旋转半径
+const int clicksPerRound = 1; // 设置点击次数
+const int stepsPerRound = 36; // 设置旋转的步数，现在是两圈
+const int nRounds = 1;
+const int timePerRound = 400; // ms
+
+int rotationStep = 0;
+
 DWORD WINAPI ClickThread(LPVOID lpParam) {
     int* pos = (int*)lpParam;
     mouse_event(MOUSEEVENTF_RIGHTDOWN, pos[0], pos[1], 0, 0);
@@ -39,46 +48,16 @@ int main() {
         }
         
         if (GetAsyncKeyState(circleKey)) {
-            const double PI = 3.14159265358979323846;
-            const int radius = 10; // 设置旋转半径
-            const int clicks = 1; // 设置点击次数
-            const int stepsPerRound = 10; // 设置旋转的步数，现在是两圈
-            const int nRounds = 1;
+            // Increment the rotation step
+            rotationStep++;
 
-            int stepTot = stepsPerRound * nRounds;
-            int stepsPerClick = stepTot / clicks;
+            // Calculate the new position based on the rotation step
+            int x = centerX + radius * cos(2 * PI * rotationStep / stepsPerRound);
+            int y = centerY + radius * sin(2 * PI * rotationStep / stepsPerRound);
 
-            SHORT rightButtonState = GetAsyncKeyState(VK_RBUTTON);
-            HANDLE hThread;
-
-            for (int roundIdx = 0; roundIdx < nRounds; roundIdx++) {
-                for (int stepIdx = 0; stepIdx < stepsPerRound; stepIdx++) {
-                    double angle = ((double)stepIdx / stepsPerRound) * (2.0 * PI);
-                    int x = centerX + radius * cos(angle);
-                    int y = centerY + radius * sin(angle);
-                    SetCursorPos(x, y);
-
-                    int stepTotCur = stepsPerRound * nRounds;
-                    if (stepTotCur % stepsPerClick == 0) {
-                        // 模拟鼠标右键点击
-                        int pos[2] = {x, y};
-                        hThread = CreateThread(NULL, 0, ClickThread, pos, 0, NULL);
-                    }
-
-                    Sleep(20); // 延迟以便在1秒内完成旋转
-                }
-            }
-
-            end:
-                WaitForSingleObject(hThread, INFINITE);
-                // move the cursor to the center
-                SetCursorPos(centerX, centerY);
-                // Restore the state of the right button
-                if (rightButtonState & 0x8000) {
-                    // If the right button was down before, simulate a right button down event
-                    mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0);
-                    // printf("right button down\n");
-                }
+            // Move the cursor to the new position
+            SetCursorPos(x, y);
+            Sleep(timePerRound / stepsPerRound);
         }
     }
 
